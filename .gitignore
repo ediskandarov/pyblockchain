@@ -1,0 +1,4 @@
+*.py[co]
+/.cache
+/.tox
+/pyblockchain.egg-info
