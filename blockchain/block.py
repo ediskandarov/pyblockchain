@@ -1,4 +1,3 @@
-from hashlib import sha256
 import struct
 
 
@@ -130,7 +129,10 @@ class TransactionInput(object):
 
     @classmethod
     def from_binary_data(cls, data, offset):
-        prev_hash, txn_out_id = struct.unpack('<32sI', data[offset:offset + 36])
+        prev_hash, txn_out_id = struct.unpack(
+            '<32sI',
+            data[offset:offset + 36]
+        )
         offset += 36
 
         script_length, bytes_consumed = varint(data, offset=offset)

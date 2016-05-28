@@ -5,6 +5,7 @@ from blockchain.block import Block
 
 blockchain_path = os.path.join(os.path.dirname(__file__), '1M.dat')
 
+
 def test_genesis_block_headers():
     """https://en.bitcoin.it/wiki/Genesis_block"""
 
@@ -45,7 +46,8 @@ def test_genesis_block_headers():
     assert '{:02x}'.format(txn_input.seq_no) == 'ffffffff'
     assert txn_input.txn_out_id == 4294967295
     assert txn_input.script_sig.endswith(
-        b'The Times 03/Jan/2009 Chancellor on brink of second bailout for banks'
+        b'The Times 03/Jan/2009 Chancellor on '
+        b'brink of second bailout for banks'
     )
 
     assert len(txn.outputs) == 1
