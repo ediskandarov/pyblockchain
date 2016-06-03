@@ -24,8 +24,6 @@ class BlockchainFileReader(object):
                 )
                 block = Block.from_binary_data(blockchain_mview, offset=0)
                 yield block
-                # block size + 4 bytes magic number + 4 bytes block size
-                block_total_size = block.header.block_size + 8
-                offset += block_total_size
+                offset += block.total_size
 
             blockchain_mmap.close()

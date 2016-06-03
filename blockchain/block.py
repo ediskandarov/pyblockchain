@@ -218,6 +218,11 @@ class Block(object):
         self.header = header
         self.transactions = transactions
 
+    @property
+    def total_size(self):
+        # block size + 4 bytes magic number + 4 bytes block size
+        return self.header.block_size + 8
+
     @classmethod
     def from_binary_data(
             cls,

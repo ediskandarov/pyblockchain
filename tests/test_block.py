@@ -32,6 +32,8 @@ def test_genesis_block_headers():
     assert '{:02x}'.format(block.header.bits) == '1d00ffff'
     assert block.header.nonce == 2083236893
 
+    assert block.total_size == 293
+
     assert len(block.transactions) == 1
 
     txn = block.transactions[0]
