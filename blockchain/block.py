@@ -5,23 +5,24 @@ from typing import Sequence
 def varint(data: memoryview, offset: int) -> (int, int):
     # variable length integer
     # 1 byte unsigned int8
-    value, = struct.unpack('<B', data[offset:offset + 1])
-    bytes_consumed = 1
+    value, = struct.unpack_from('<B', data, offset=offset)
+    bytes_consumed = struct.calcsize('<B')
+    offset += bytes_consumed
 
     if value < 253:
         pass
     elif value == 253:
         # 2 bytes unsigned int16
-        value, = struct.unpack('<H', data[offset + 1:offset + 3])
-        bytes_consumed += 2
+        value, = struct.unpack_from('<H', data, offset=offset)
+        bytes_consumed += struct.calcsize('<H')
     elif value == 254:
         # 4 bytes unsigned int32
-        value, = struct.unpack('<I', data[offset + 1:offset + 5])
-        bytes_consumed += 4
+        value, = struct.unpack_from('<I', data, offset=offset)
+        bytes_consumed += struct.calcsize('<I')
     elif value == 255:
         # 8 bytes unsigned int64
-        value, = struct.unpack('<Q', data[offset + 1:offset + 9])
-        bytes_consumed += 8
+        value, = struct.unpack_from('<Q', data, offset=offset)
+        bytes_consumed += struct.calcsize('<Q')
     return value, bytes_consumed
 
 
@@ -68,7 +69,7 @@ class BlockHeader(object):
         # unsigned int32 time
         # unsigned int32 bits
         # unsigned int32 nonce
-        tup = struct.unpack('<III32s32sIII', data)
+        tup = struct.unpack_from('<III32s32sIII', data)
         return cls(*tup)
 
     @property
@@ -97,20 +98,24 @@ class TransactionInput(object):
             data: memoryview,
             offset: int,
     ):
-        prev_hash, txn_out_id = struct.unpack(
-            '<32sI',
-            data[offset:offset + 36]
+        prev_hash_txn_out_id_fmt = '<32sI'
+        prev_hash, txn_out_id = struct.unpack_from(
+            prev_hash_txn_out_id_fmt,
+            data,
+            offset=offset
         )
-        offset += 36
+        offset += struct.calcsize(prev_hash_txn_out_id_fmt)
 
         script_length, bytes_consumed = varint(data, offset=offset)
         offset += bytes_consumed
 
-        script_sig, seq_no = struct.unpack(
-            '<{}sI'.format(script_length),
-            data[offset:offset + script_length + 4]
+        script_sig_seq_no_fmt = '<{}sI'.format(script_length)
+        script_sig, seq_no = struct.unpack_from(
+            script_sig_seq_no_fmt,
+            data,
+            offset=offset
         )
-        offset += script_length + 4
+        offset += struct.calcsize(script_sig_seq_no_fmt)
 
         return cls(prev_hash, txn_out_id, script_sig, seq_no), offset
 
@@ -132,17 +137,16 @@ class TransactionOutput(object):
             data: memoryview,
             offset: int,
     ):
-        value, = struct.unpack('<Q', data[offset:offset + 8])
-        offset += 8
+        value_fmt = '<Q'
+        value, = struct.unpack_from(value_fmt, data, offset=offset)
+        offset += struct.calcsize(value_fmt)
 
         public_key_length, bytes_consumed = varint(data, offset=offset)
         offset += bytes_consumed
 
-        public_key, = struct.unpack(
-            '<{}s'.format(public_key_length),
-            data[offset:offset + public_key_length]
-        )
-        offset += public_key_length
+        public_key_fmt = '<{}s'.format(public_key_length)
+        public_key, = struct.unpack_from(public_key_fmt, data, offset=offset)
+        offset += struct.calcsize(public_key_fmt)
 
         return cls(value, public_key), offset
 
@@ -168,8 +172,9 @@ class Transaction(object):
             data: memoryview,
             offset: int,
     ):
-        version, = struct.unpack('<I', data[offset:offset + 4])
-        offset += 4
+        version_fmt = '<I'
+        version, = struct.unpack_from(version_fmt, data, offset=offset)
+        offset += struct.calcsize(version_fmt)
 
         # Input transactions
         txn_input_count, bytes_consumed = varint(data, offset=offset)
@@ -197,8 +202,9 @@ class Transaction(object):
             offset = new_offset
             txn_output_list.append(txn_output)
 
-        lock_time, = struct.unpack('<I', data[offset:offset + 4])
-        offset += 4
+        lock_time_fmt = '<I'
+        lock_time, = struct.unpack_from(version_fmt, data, offset=offset)
+        offset += struct.calcsize(lock_time_fmt)
 
         return cls(version, txn_input_list, txn_output_list, lock_time), offset
 

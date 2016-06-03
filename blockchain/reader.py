@@ -1,5 +1,4 @@
 import mmap
-import os
 
 from .block import Block
 
@@ -20,7 +19,9 @@ class BlockchainFileReader(object):
             offset = 0
             limit = 4096
             while True:
-                blockchain_mview = memoryview(blockchain_mmap[offset:offset + limit])
+                blockchain_mview = memoryview(
+                    blockchain_mmap[offset:offset + limit]
+                )
                 block = Block.from_binary_data(blockchain_mview, offset=0)
                 yield block
                 # block size + 4 bytes magic number + 4 bytes block size
