@@ -6,24 +6,23 @@ def varint(data: memoryview, offset: int) -> (int, int):
     # variable length integer
     # 1 byte unsigned int8
     value, = struct.unpack_from('<B', data, offset=offset)
-    bytes_consumed = struct.calcsize('<B')
-    offset += bytes_consumed
+    offset += struct.calcsize('<B')
 
     if value < 253:
         pass
     elif value == 253:
         # 2 bytes unsigned int16
         value, = struct.unpack_from('<H', data, offset=offset)
-        bytes_consumed += struct.calcsize('<H')
+        offset += struct.calcsize('<H')
     elif value == 254:
         # 4 bytes unsigned int32
         value, = struct.unpack_from('<I', data, offset=offset)
-        bytes_consumed += struct.calcsize('<I')
+        offset += struct.calcsize('<I')
     elif value == 255:
         # 8 bytes unsigned int64
         value, = struct.unpack_from('<Q', data, offset=offset)
-        bytes_consumed += struct.calcsize('<Q')
-    return value, bytes_consumed
+        offset += struct.calcsize('<Q')
+    return value, offset
 
 
 class BlockHeader(object):
@@ -62,6 +61,7 @@ class BlockHeader(object):
     def from_binary_data(
             cls,
             data: memoryview,
+            offset: int,
     ):
         # unsigned int32 version
         # 32 bytes of previous hash
@@ -69,8 +69,12 @@ class BlockHeader(object):
         # unsigned int32 time
         # unsigned int32 bits
         # unsigned int32 nonce
-        tup = struct.unpack_from('<III32s32sIII', data)
-        return cls(*tup)
+        header_fmt = '<III32s32sIII'
+        tup = struct.unpack_from(header_fmt, data, offset=offset)
+
+        offset += struct.calcsize(header_fmt)
+
+        return cls(*tup), offset
 
     @property
     def magic_number_hex(self) -> str:
@@ -106,8 +110,7 @@ class TransactionInput(object):
         )
         offset += struct.calcsize(prev_hash_txn_out_id_fmt)
 
-        script_length, bytes_consumed = varint(data, offset=offset)
-        offset += bytes_consumed
+        script_length, offset = varint(data, offset=offset)
 
         script_sig_seq_no_fmt = '<{}sI'.format(script_length)
         script_sig, seq_no = struct.unpack_from(
@@ -141,8 +144,7 @@ class TransactionOutput(object):
         value, = struct.unpack_from(value_fmt, data, offset=offset)
         offset += struct.calcsize(value_fmt)
 
-        public_key_length, bytes_consumed = varint(data, offset=offset)
-        offset += bytes_consumed
+        public_key_length, offset = varint(data, offset=offset)
 
         public_key_fmt = '<{}s'.format(public_key_length)
         public_key, = struct.unpack_from(public_key_fmt, data, offset=offset)
@@ -177,29 +179,25 @@ class Transaction(object):
         offset += struct.calcsize(version_fmt)
 
         # Input transactions
-        txn_input_count, bytes_consumed = varint(data, offset=offset)
-        offset += bytes_consumed
+        txn_input_count, offset = varint(data, offset=offset)
 
         txn_input_list = []
         for i in range(txn_input_count):
-            txn_input, new_offset = TransactionInput.from_binary_data(
+            txn_input, offset = TransactionInput.from_binary_data(
                 data,
                 offset=offset,
             )
-            offset = new_offset
             txn_input_list.append(txn_input)
 
         # Output transactions
-        txn_output_count, bytes_consumed = varint(data, offset=offset)
-        offset += bytes_consumed
+        txn_output_count, offset = varint(data, offset=offset)
 
         txn_output_list = []
         for i in range(txn_output_count):
-            txn_output, new_offset = TransactionOutput.from_binary_data(
+            txn_output, offset = TransactionOutput.from_binary_data(
                 data,
                 offset=offset,
             )
-            offset = new_offset
             txn_output_list.append(txn_output)
 
         lock_time_fmt = '<I'
@@ -226,21 +224,19 @@ class Block(object):
             block_data: memoryview,
             offset: int,
     ):
-        header_data = block_data[offset:offset + 88]
-        header = BlockHeader.from_binary_data(header_data)
-        offset += 88
+        header, offset = BlockHeader.from_binary_data(
+            block_data,
+            offset=offset,
+        )
 
-        txn_count, bytes_consumed = varint(block_data, offset=offset)
-        offset += bytes_consumed
+        txn_count, offset = varint(block_data, offset=offset)
 
-        txns = []
+        transaction_list = []
         for i in range(txn_count):
-            txn, new_offset = Transaction.from_binary_data(
+            transaction, offset = Transaction.from_binary_data(
                 block_data,
                 offset=offset
             )
-            offset = new_offset
+            transaction_list.append(transaction)
 
-            txns.append(txn)
-
-        return cls(header, txns)
+        return cls(header, transaction_list)
