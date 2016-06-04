@@ -30,6 +30,7 @@ def test_genesis_block_headers():
         '4a5e1e4baab89f3a32518a88c31bc87f618f76673e2cc77ab2127b7afdeda33b'
     )
     assert block.header.time == datetime(2009, 1, 3, 18, 15, 5)
+    assert block.header.bits == 486604799
     assert '{:02x}'.format(block.header.bits) == '1d00ffff'
     assert block.header.nonce == 2083236893
 
@@ -40,7 +41,7 @@ def test_genesis_block_headers():
     txn = block.transactions[0]
     assert txn.version == 1
     assert len(txn.inputs) == 1
-    assert txn.lock_time == 0
+    assert txn.lock_time == datetime(1970, 1, 1, 0, 0)
 
     txn_input = txn.inputs[0]
     assert txn_input.previous_hash == (
@@ -48,7 +49,7 @@ def test_genesis_block_headers():
     )
     assert '{:02x}'.format(txn_input.seq_no) == 'ffffffff'
     assert txn_input.txn_out_id == 4294967295
-    assert txn_input.script_sig.endswith(
+    assert txn_input.signature_script.endswith(
         b'The Times 03/Jan/2009 Chancellor on '
         b'brink of second bailout for banks'
     )
@@ -56,7 +57,7 @@ def test_genesis_block_headers():
     assert len(txn.outputs) == 1
     txn_output = txn.outputs[0]
     assert txn_output.value == 50 * (10 ** 8)
-    assert txn_output.public_key.hex() == (
+    assert txn_output.script_pub_key.hex() == (
         '4104678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb'
         '649f6bc3f4cef38c4f35504e51ec112de5c384df7ba0b8d578a4c702b6bf11d5fac'
     )

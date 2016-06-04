@@ -1,9 +1,24 @@
+"""
+According to https://bitcoin.org/en/developer-reference#block-headers
+
+> The hashes are in internal byte order; the other values are all in
+  little-endian order.
+
+"""
 from datetime import datetime
 import struct
 from typing import Sequence
 
 
 def varint(data: memoryview, offset: int) -> (int, int):
+    """The raw transaction format and several peer-to-peer network messages use
+    a type of variable-length integer to indicate the number of bytes in a
+    following piece of data.
+
+    Reference:
+    https://bitcoin.org/en/developer-reference#compactsize-unsigned-integers
+
+    """
     # variable length integer
     # 1 byte unsigned int8
     value, = struct.unpack_from('<B', data, offset=offset)
@@ -11,22 +26,30 @@ def varint(data: memoryview, offset: int) -> (int, int):
 
     if value < 253:
         pass
-    elif value == 253:
-        # 2 bytes unsigned int16
+    elif value == 0xfd:
+        # 0xfd followed by the number as uint16_t
         value, = struct.unpack_from('<H', data, offset=offset)
         offset += struct.calcsize('<H')
-    elif value == 254:
-        # 4 bytes unsigned int32
+    elif value == 0xfe:
+        # 0xfe followed by the number as uint32_t
         value, = struct.unpack_from('<I', data, offset=offset)
         offset += struct.calcsize('<I')
     elif value == 255:
-        # 8 bytes unsigned int64
+        # 0xff followed by the number as uint64_t
         value, = struct.unpack_from('<Q', data, offset=offset)
         offset += struct.calcsize('<Q')
     return value, offset
 
 
 class BlockHeader(object):
+    """Block headers are serialized in the 80-byte format described below and
+    then hashed as part of Bitcoin’s proof-of-work algorithm, making the
+    serialized header format part of the consensus rules.
+
+    Reference:
+    https://bitcoin.org/en/developer-reference#block-headers
+
+    """
     __slots__ = [
         'magic_number',
         'block_size',
@@ -49,6 +72,24 @@ class BlockHeader(object):
             bits: int,
             nonce: int,
     ):
+        """
+        :param version: The block version number indicates which set of block
+            validation rules to follow.
+        :param previous_hash: A SHA256(SHA256()) hash in internal byte order of
+             the previous block’s header. This ensures no previous block can be
+             changed without also changing this block’s header.
+        :param merkle_hash: A SHA256(SHA256()) hash in internal byte order. The
+            merkle root is derived from the hashes of all transactions included
+            in this block, ensuring that none of those transactions can be
+            modified without modifying the header.
+        :param timestamp: The block time is a Unix epoch time when the miner
+            started hashing the header (according to the miner).
+        :param bits: An encoded version of the target threshold this block’s
+            header hash must be less than or equal to.
+        :param nonce: An arbitrary number miners change to modify the header
+            hash in order to produce a hash below the target threshold.
+
+        """
         self.magic_number = magic_number
         self.block_size = block_size
         self.version = version
@@ -95,18 +136,41 @@ class BlockHeader(object):
 
 
 class TransactionInput(object):
-    __slots__ = ['previous_hash_raw', 'txn_out_id', 'script_sig', 'seq_no']
+    """The first transaction in a block, called the coinbase transaction, must
+    have exactly one input, called a coinbase. The coinbase input currently has
+    the following format.
+
+    TODO coinbase transaction
+
+    Reference:
+    https://bitcoin.org/en/developer-reference#coinbase
+
+    """
+    __slots__ = [
+        'previous_hash_raw',
+        'txn_out_id',
+        'signature_script',
+        'seq_no',
+    ]
 
     def __init__(
             self,
             previous_hash: bytes,
-            txn_out_id: int,
-            script_sig: bytes,
+            txn_out_id: int,  # ?? previous_hash is 36 bytes long
+            signature_script: bytes,
             seq_no: int,
     ):
+        """
+        :param previous_hash: The previous outpoint being spent.
+        :param signature_script: A script-language script which satisfies the
+            conditions placed in the outpoint’s pubkey script.
+        :param seq_no: Sequence number. Default for Bitcoin Core and almost all
+            other programs is 0xffffffff.
+
+        """
         self.previous_hash_raw = previous_hash
         self.txn_out_id = txn_out_id
-        self.script_sig = script_sig
+        self.signature_script = signature_script
         self.seq_no = seq_no
 
     @property
@@ -141,15 +205,30 @@ class TransactionInput(object):
 
 
 class TransactionOutput(object):
-    __slots__ = ['value', 'public_key']
+    """Each output spends a certain number of satoshis, placing them under
+    control of anyone who can satisfy the provided pubkey script.
+
+    Reference:
+    https://bitcoin.org/en/developer-reference#txout
+
+    """
+    __slots__ = ['value', 'script_pub_key']
 
     def __init__(
             self,
             value: int,
-            public_key: bytes,
+            script_pub_key: bytes,
     ):
+        """
+        :param value: Number of satoshis to spend. May be zero; the sum of all
+            outputs may not exceed the sum of satoshis previously spent to the
+            outpoints provided in the input section.
+        :param script_pub_key: Defines the conditions which must be satisfied
+            to spend this output.
+
+        """
         self.value = value
-        self.public_key = public_key
+        self.script_pub_key = script_pub_key
 
     @classmethod
     def from_binary_data(
@@ -157,7 +236,7 @@ class TransactionOutput(object):
             data: memoryview,
             offset: int,
     ):
-        value_fmt = '<Q'
+        value_fmt = '<q'
         value, = struct.unpack_from(value_fmt, data, offset=offset)
         offset += struct.calcsize(value_fmt)
 
@@ -171,19 +250,42 @@ class TransactionOutput(object):
 
 
 class Transaction(object):
-    __slots__ = ['version', 'inputs', 'outputs', 'lock_time']
+    """Bitcoin transactions are broadcast between peers in a serialized byte
+    format, called raw format. It is this form of a transaction which is
+    SHA256(SHA256()) hashed to create the TXID and, ultimately, the merkle root
+    of a block containing the transaction—making the transaction format part of
+    the consensus rules.
+
+    Reference:
+    https://bitcoin.org/en/developer-reference#raw-transaction-format
+
+    """
+    __slots__ = ['version', 'inputs', 'outputs', 'lock_timestamp']
 
     def __init__(
             self,
             version: int,
             inputs: Sequence[TransactionInput],
             outputs: Sequence[TransactionOutput],
-            lock_time: int,
+            lock_timestamp: int,
     ):
+        """
+        :param version: Transaction version number; currently version 1.
+            Programs creating transactions using newer consensus rules may use
+            higher version numbers.
+        :param inputs: Transaction inputs.
+        :param outputs: Transaction outputs.
+        :param lock_time: A time (Unix epoch time) or block number.
+
+        """
         self.version = version
         self.inputs = inputs
         self.outputs = outputs
-        self.lock_time = lock_time
+        self.lock_timestamp = lock_timestamp
+
+    @property
+    def lock_time(self):
+        return datetime.utcfromtimestamp(self.lock_timestamp)
 
     @classmethod
     def from_binary_data(
