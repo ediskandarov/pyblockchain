@@ -1,4 +1,5 @@
 import mmap
+import struct
 
 from .block import Block
 
@@ -19,10 +20,14 @@ class BlockchainFileReader(object):
             offset = 0
             limit = 4096
             while True:
+                # TODO: no need in memory view?
                 blockchain_mview = memoryview(
                     blockchain_mmap[offset:offset + limit]
                 )
-                block = Block.from_binary_data(blockchain_mview, offset=0)
+                try:
+                    block = Block.from_binary_data(blockchain_mview, offset=0)
+                except struct.error:
+                    break
                 yield block
                 offset += block.total_size
 
