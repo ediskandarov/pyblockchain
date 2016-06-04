@@ -22,11 +22,11 @@ def test_genesis_block_headers():
     assert block.header.magic_number_hex == 'd9b4bef9'
     assert block.header.block_size == 285
     assert block.header.version == 1
-    assert block.header.previous_hash.hex() == (
+    assert block.header.previous_hash == (
         '0000000000000000000000000000000000000000000000000000000000000000'
     )
-    assert block.header.merkle_hash.hex() == (
-        '3ba3edfd7a7b12b27ac72c3e67768f617fc81bc3888a51323a9fb8aa4b1e5e4a'
+    assert block.header.merkle_hash == (
+        '4a5e1e4baab89f3a32518a88c31bc87f618f76673e2cc77ab2127b7afdeda33b'
     )
     assert block.header.time == 1231006505
     assert '{:02x}'.format(block.header.bits) == '1d00ffff'

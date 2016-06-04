@@ -30,8 +30,8 @@ class BlockHeader(object):
         'magic_number',
         'block_size',
         'version',
-        'previous_hash',
-        'merkle_hash',
+        'previous_hash_raw',
+        'merkle_hash_raw',
         'time',
         'bits',
         'nonce',
@@ -51,11 +51,19 @@ class BlockHeader(object):
         self.magic_number = magic_number
         self.block_size = block_size
         self.version = version
-        self.previous_hash = previous_hash
-        self.merkle_hash = merkle_hash
+        self.previous_hash_raw = previous_hash
+        self.merkle_hash_raw = merkle_hash
         self.time = time
         self.bits = bits
         self.nonce = nonce
+
+    @property
+    def previous_hash(self):
+        return self.previous_hash_raw[::-1].hex()
+
+    @property
+    def merkle_hash(self):
+        return self.merkle_hash_raw[::-1].hex()
 
     @classmethod
     def from_binary_data(
