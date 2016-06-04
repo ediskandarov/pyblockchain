@@ -4,7 +4,7 @@ from setuptools import find_packages, setup
 setup(
     name='pyblockchain',
     version='0.1.0',
-    description=open('README.rst').read(),
+    description='pyblockchain is a Python library for parsing blockchain data',
     url='https://github.com/toidi/pyblockchain',
     author='Eduard Iskandarov',
     author_email='eduard.iskandarov@yandex.ru',
