@@ -1,3 +1,4 @@
+from datetime import datetime
 import struct
 from typing import Sequence
 
@@ -32,7 +33,7 @@ class BlockHeader(object):
         'version',
         'previous_hash_raw',
         'merkle_hash_raw',
-        'time',
+        'timestamp',
         'bits',
         'nonce',
     ]
@@ -44,7 +45,7 @@ class BlockHeader(object):
             version: int,
             previous_hash: bytes,
             merkle_hash: bytes,
-            time: int,
+            timestamp: int,
             bits: int,
             nonce: int,
     ):
@@ -53,9 +54,13 @@ class BlockHeader(object):
         self.version = version
         self.previous_hash_raw = previous_hash
         self.merkle_hash_raw = merkle_hash
-        self.time = time
+        self.timestamp = timestamp
         self.bits = bits
         self.nonce = nonce
+
+    @property
+    def time(self):
+        return datetime.utcfromtimestamp(self.timestamp)
 
     @property
     def previous_hash(self):
@@ -90,19 +95,23 @@ class BlockHeader(object):
 
 
 class TransactionInput(object):
-    __slots__ = ['prev_hash', 'txn_out_id', 'script_sig', 'seq_no']
+    __slots__ = ['previous_hash_raw', 'txn_out_id', 'script_sig', 'seq_no']
 
     def __init__(
             self,
-            prev_hash: bytes,
+            previous_hash: bytes,
             txn_out_id: int,
             script_sig: bytes,
             seq_no: int,
     ):
-        self.prev_hash = prev_hash
+        self.previous_hash_raw = previous_hash
         self.txn_out_id = txn_out_id
         self.script_sig = script_sig
         self.seq_no = seq_no
+
+    @property
+    def previous_hash(self):
+        return self.previous_hash_raw[::-1].hex()
 
     @classmethod
     def from_binary_data(

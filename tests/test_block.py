@@ -1,3 +1,4 @@
+from datetime import datetime
 import os
 import mmap
 
@@ -28,7 +29,7 @@ def test_genesis_block_headers():
     assert block.header.merkle_hash == (
         '4a5e1e4baab89f3a32518a88c31bc87f618f76673e2cc77ab2127b7afdeda33b'
     )
-    assert block.header.time == 1231006505
+    assert block.header.time == datetime(2009, 1, 3, 18, 15, 5)
     assert '{:02x}'.format(block.header.bits) == '1d00ffff'
     assert block.header.nonce == 2083236893
 
@@ -42,7 +43,7 @@ def test_genesis_block_headers():
     assert txn.lock_time == 0
 
     txn_input = txn.inputs[0]
-    assert txn_input.prev_hash.hex() == (
+    assert txn_input.previous_hash == (
         '0000000000000000000000000000000000000000000000000000000000000000'
     )
     assert '{:02x}'.format(txn_input.seq_no) == 'ffffffff'
