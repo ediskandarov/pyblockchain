@@ -3,6 +3,7 @@ import os
 import mmap
 
 from blockchain.block import Block
+from blockchain.constants import Network
 
 blockchain_path = os.path.join(os.path.dirname(__file__), '1M.dat')
 
@@ -20,7 +21,7 @@ def test_genesis_block_headers():
         blockchain_mview = memoryview(blockchain_mmap)
         block = Block.from_binary_data(blockchain_mview, offset=0)
 
-    assert block.header.magic_number_hex == 'd9b4bef9'
+    assert block.header.magic_number == Network.mainnet.value
     assert block.header.block_size == 285
     assert block.header.version == 1
     assert block.header.previous_hash == (
@@ -31,7 +32,7 @@ def test_genesis_block_headers():
     )
     assert block.header.time == datetime(2009, 1, 3, 18, 15, 5)
     assert block.header.bits == 486604799
-    assert '{:02x}'.format(block.header.bits) == '1d00ffff'
+    assert block.header.bits == 0x1d00ffff
     assert block.header.nonce == 2083236893
 
     assert block.total_size == 293
@@ -47,8 +48,9 @@ def test_genesis_block_headers():
     assert txn_input.previous_hash == (
         '0000000000000000000000000000000000000000000000000000000000000000'
     )
-    assert '{:02x}'.format(txn_input.seq_no) == 'ffffffff'
-    assert txn_input.txn_out_id == 4294967295
+
+    assert txn_input.seq_no == 0xffffffff
+    assert txn_input.txn_out_id == 0xffffffff
     assert txn_input.signature_script.endswith(
         b'The Times 03/Jan/2009 Chancellor on '
         b'brink of second bailout for banks'

@@ -29,7 +29,8 @@ Usage
 Useful links
 ============
 
-* `Developer reference Block Chain`_
+* `Bitcoin Developer Guide`_
+* `Bitcoin Developer Reference`_
 * `Block Parser for Bitcoin`_
 * `How to Program Block Chain Explorers with Python`_
 * `Genesis block`_
@@ -39,4 +40,5 @@ Useful links
 .. _How to Program Block Chain Explorers with Python: http://alexgorale.com/how-to-program-block-chain-explorers-with-python-part-1
 .. _Genesis block: https://en.bitcoin.it/wiki/Genesis_block
 .. _Blockchain.info Block #0: https://blockchain.info/block/000000000019d6689c085ae165831e934ff763ae46a2a6c172b3f1b60a8ce26f
-.. _Developer reference Block Chain: https://bitcoin.org/en/developer-reference#block-chain
+.. _Bitcoin Developer Guide: https://bitcoin.org/en/developer-guide
+.. _Bitcoin Developer Reference: https://bitcoin.org/en/developer-reference

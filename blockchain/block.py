@@ -130,17 +130,11 @@ class BlockHeader(object):
 
         return cls(*tup), offset
 
-    @property
-    def magic_number_hex(self) -> str:
-        return '{:02x}'.format(self.magic_number)
-
 
 class TransactionInput(object):
     """The first transaction in a block, called the coinbase transaction, must
     have exactly one input, called a coinbase. The coinbase input currently has
     the following format.
-
-    TODO coinbase transaction
 
     Reference:
     https://bitcoin.org/en/developer-reference#coinbase
@@ -156,12 +150,13 @@ class TransactionInput(object):
     def __init__(
             self,
             previous_hash: bytes,
-            txn_out_id: int,  # ?? previous_hash is 36 bytes long
+            txn_out_id: int,
             signature_script: bytes,
             seq_no: int,
     ):
         """
         :param previous_hash: The previous outpoint being spent.
+        :txn_out_id: 0xffffffff, as a coinbase has no previous outpoint.
         :param signature_script: A script-language script which satisfies the
             conditions placed in the outpoint’s pubkey script.
         :param seq_no: Sequence number. Default for Bitcoin Core and almost all
@@ -181,14 +176,34 @@ class TransactionInput(object):
     def from_binary_data(
             cls,
             data: memoryview,
+            is_coinbase: bool,
             offset: int,
     ):
-        prev_hash_txn_out_id_fmt = '<32sI'
-        prev_hash, txn_out_id = struct.unpack_from(
-            prev_hash_txn_out_id_fmt,
-            data,
-            offset=offset
-        )
+        if is_coinbase:
+            # The first transaction in a block, called the coinbase
+            # transaction, must have exactly one input, called a coinbase.
+            #
+            # Reference:
+            # https://bitcoin.org/en/developer-reference#coinbase
+            prev_hash_txn_out_id_fmt = '<32sI'
+            prev_hash, txn_out_id = struct.unpack_from(
+                prev_hash_txn_out_id_fmt,
+                data,
+                offset=offset
+            )
+        else:
+            # Each non-coinbase input spends an outpoint from a previous
+            # transaction.
+            #
+            # Reference:
+            # https://bitcoin.org/en/developer-reference#txin
+            prev_hash_txn_out_id_fmt = '<36s'
+            prev_hash, = struct.unpack_from(
+                prev_hash_txn_out_id_fmt,
+                data,
+                offset=offset
+            )
+            txn_out_id = None
         offset += struct.calcsize(prev_hash_txn_out_id_fmt)
 
         script_length, offset = varint(data, offset=offset)
@@ -291,6 +306,7 @@ class Transaction(object):
     def from_binary_data(
             cls,
             data: memoryview,
+            txn_index: int,
             offset: int,
     ):
         version_fmt = '<I'
@@ -300,10 +316,15 @@ class Transaction(object):
         # Input transactions
         txn_input_count, offset = varint(data, offset=offset)
 
+        # The first transaction in a block, called the coinbase
+        # transaction, must have exactly one input, called a coinbase.
+        is_coinbase = txn_index == 0
+
         txn_input_list = []
         for i in range(txn_input_count):
             txn_input, offset = TransactionInput.from_binary_data(
                 data,
+                is_coinbase=is_coinbase,
                 offset=offset,
             )
             txn_input_list.append(txn_input)
@@ -359,7 +380,8 @@ class Block(object):
         for i in range(txn_count):
             transaction, offset = Transaction.from_binary_data(
                 block_data,
-                offset=offset
+                txn_index=i,
+                offset=offset,
             )
             transaction_list.append(transaction)
 
