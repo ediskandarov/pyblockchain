@@ -6,6 +6,7 @@ According to https://bitcoin.org/en/developer-reference#block-headers
 
 """
 from datetime import datetime
+from hashlib import sha256
 import struct
 from typing import Sequence
 
@@ -100,15 +101,15 @@ class BlockHeader(object):
         self.nonce = nonce
 
     @property
-    def time(self):
+    def time(self) -> datetime:
         return datetime.utcfromtimestamp(self.timestamp)
 
     @property
-    def previous_hash(self):
+    def previous_hash(self) -> str:
         return self.previous_hash_raw[::-1].hex()
 
     @property
-    def merkle_hash(self):
+    def merkle_hash(self) -> str:
         return self.merkle_hash_raw[::-1].hex()
 
     @classmethod
@@ -169,7 +170,7 @@ class TransactionInput(object):
         self.seq_no = seq_no
 
     @property
-    def previous_hash(self):
+    def previous_hash(self) -> str:
         return self.previous_hash_raw[::-1].hex()
 
     @classmethod
@@ -299,7 +300,7 @@ class Transaction(object):
         self.lock_timestamp = lock_timestamp
 
     @property
-    def lock_time(self):
+    def lock_time(self) -> datetime:
         return datetime.utcfromtimestamp(self.lock_timestamp)
 
     @classmethod
@@ -359,7 +360,23 @@ class Block(object):
         self.transactions = transactions
 
     @property
-    def total_size(self):
+    def hashcash(self) -> str:
+        header_bin = struct.pack(
+            '<I32s32sIII',
+            self.header.version,
+            self.header.previous_hash_raw,
+            self.header.merkle_hash_raw,
+            self.header.timestamp,
+            self.header.bits,
+            self.header.nonce,
+        )
+        h = sha256(
+            sha256(header_bin).digest()
+        ).digest()
+        return h[::-1].hex()
+
+    @property
+    def total_size(self) -> int:
         # block size + 4 bytes magic number + 4 bytes block size
         return self.header.block_size + 8
 
