@@ -9,6 +9,7 @@ class BlockchainFileReader(object):
         self._file_name = file_name
 
     def __iter__(self):
+        """TODO: Possibly inefficient implementation."""
         with open(self._file_name, 'rb') as f:
             # Map for 8MB block size
             mmap_length = 0
@@ -19,7 +20,7 @@ class BlockchainFileReader(object):
             )
 
             offset = 0
-            # minit - 8 MB
+            # linit - 8 MB
             limit = 8 * 1024 * 1024
             while True:
                 # TODO: no need in memory view?
@@ -35,5 +36,4 @@ class BlockchainFileReader(object):
                 yield block
                 offset += block.total_size
                 blockchain_mmap.seek(block.total_size)
-
             blockchain_mmap.close()

@@ -177,34 +177,14 @@ class TransactionInput(object):
     def from_binary_data(
             cls,
             data: memoryview,
-            is_coinbase: bool,
             offset: int,
     ):
-        if is_coinbase:
-            # The first transaction in a block, called the coinbase
-            # transaction, must have exactly one input, called a coinbase.
-            #
-            # Reference:
-            # https://bitcoin.org/en/developer-reference#coinbase
-            prev_hash_txn_out_id_fmt = '<32sI'
-            prev_hash, txn_out_id = struct.unpack_from(
-                prev_hash_txn_out_id_fmt,
-                data,
-                offset=offset
-            )
-        else:
-            # Each non-coinbase input spends an outpoint from a previous
-            # transaction.
-            #
-            # Reference:
-            # https://bitcoin.org/en/developer-reference#txin
-            prev_hash_txn_out_id_fmt = '<36s'
-            prev_hash, = struct.unpack_from(
-                prev_hash_txn_out_id_fmt,
-                data,
-                offset=offset
-            )
-            txn_out_id = None
+        prev_hash_txn_out_id_fmt = '<32sI'
+        prev_hash, txn_out_id = struct.unpack_from(
+            prev_hash_txn_out_id_fmt,
+            data,
+            offset=offset
+        )
         offset += struct.calcsize(prev_hash_txn_out_id_fmt)
 
         script_length, offset = varint(data, offset=offset)
@@ -317,15 +297,10 @@ class Transaction(object):
         # Input transactions
         txn_input_count, offset = varint(data, offset=offset)
 
-        # The first transaction in a block, called the coinbase
-        # transaction, must have exactly one input, called a coinbase.
-        is_coinbase = txn_index == 0
-
         txn_input_list = []
         for i in range(txn_input_count):
             txn_input, offset = TransactionInput.from_binary_data(
                 data,
-                is_coinbase=is_coinbase,
                 offset=offset,
             )
             txn_input_list.append(txn_input)
