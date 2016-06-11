@@ -42,6 +42,7 @@ Useful links
 * `Block hashing algorithm`_
 * `Blockchain.info Block #0`_
 * `Script opcodes`_
+* `Parsing the Bitcoin Blockchain`_
 
 .. _Block Parser for Bitcoin: https://github.com/tenthirtyone/blocktools
 .. _How to Program Block Chain Explorers with Python: http://alexgorale.com/how-to-program-block-chain-explorers-with-python-part-1
@@ -53,3 +54,4 @@ Useful links
 .. _Bitcoin Developer Reference: https://bitcoin.org/en/developer-reference
 .. _script opcodes: https://github.com/bitcoin/bitcoin/blob/0.12/src/script/script.h
 .. _Technical background of version 1 Bitcoin addresses: https://en.bitcoin.it/wiki/Technical_background_of_version_1_Bitcoin_addresses
+.. _Parsing the Bitcoin Blockchain: http://blog.gebhartom.com/posts/Parsing%20the%20Bitcoin%20Blockchain

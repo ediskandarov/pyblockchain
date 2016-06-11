@@ -171,6 +171,7 @@ class TransactionInput(object):
         self.signature_script = signature_script
         self.seq_no = seq_no
 
+    @property
     def is_coinbase(self):
         return self.txn_out_id == 0xffffffff
 
@@ -232,12 +233,9 @@ class TransactionOutput(object):
         self.script_pub_key = script_pub_key
 
     @property
-    def is_coinbase(self):
-        return self.script_pub_key[0] == 0x41
-
-    @property
     def address(self):
-        if self.is_coinbase:
+        # pattern 1: uncompressed ECDSA digital signature of 65 bytes
+        if len(self.script_pub_key) == 67 and self.script_pub_key[0] == 65:
             ripemd160_bin_pub_key = hashlib.new(
                 'ripemd160',
                 hashlib.sha256(
@@ -256,6 +254,8 @@ class TransactionOutput(object):
 
             address = base58.b58encode(bin_address)
             return address
+        else:
+            raise NotImplemented()
 
     @classmethod
     def from_binary_data(
@@ -287,7 +287,7 @@ class Transaction(object):
     https://bitcoin.org/en/developer-reference#raw-transaction-format
 
     """
-    __slots__ = ['version', 'inputs', 'outputs', 'lock_timestamp']
+    __slots__ = ['version', 'inputs', 'outputs', 'lock_timestamp', '_txn_hash']
 
     def __init__(
             self,
@@ -295,6 +295,7 @@ class Transaction(object):
             inputs: Sequence[TransactionInput],
             outputs: Sequence[TransactionOutput],
             lock_timestamp: int,
+            txn_hash: int,
     ):
         """
         :param version: Transaction version number; currently version 1.
@@ -309,6 +310,11 @@ class Transaction(object):
         self.inputs = inputs
         self.outputs = outputs
         self.lock_timestamp = lock_timestamp
+        self._txn_hash = txn_hash
+
+    @property
+    def txn_hash(self) -> str:
+        return self._txn_hash[::-1].hex()
 
     @property
     def lock_time(self) -> datetime:
@@ -321,6 +327,7 @@ class Transaction(object):
             txn_index: int,
             offset: int,
     ):
+        initial_offset = offset
         version_fmt = '<I'
         version, = struct.unpack_from(version_fmt, data, offset=offset)
         offset += struct.calcsize(version_fmt)
@@ -350,8 +357,14 @@ class Transaction(object):
         lock_time_fmt = '<I'
         lock_time, = struct.unpack_from(version_fmt, data, offset=offset)
         offset += struct.calcsize(lock_time_fmt)
+        # TODO: hash should be calculated inside txn_hash method
+        tx_hash = hashlib.sha256(
+            hashlib.sha256(data[initial_offset:offset]).digest()
+        ).digest()
 
-        return cls(version, txn_input_list, txn_output_list, lock_time), offset
+        transaction = cls(version, txn_input_list, txn_output_list,
+                          lock_time, tx_hash)
+        return transaction, offset
 
 
 class Block(object):

@@ -76,6 +76,9 @@ def test_genesis_block(genesis_block):
     assert txn.version == 1
     assert len(txn.inputs) == 1
     assert txn.lock_time == datetime(1970, 1, 1, 0, 0)
+    assert txn.txn_hash == (
+        '4a5e1e4baab89f3a32518a88c31bc87f618f76673e2cc77ab2127b7afdeda33b'
+    )
 
     txn_input = txn.inputs[0]
     assert txn_input.is_coinbase
@@ -97,7 +100,6 @@ def test_genesis_block(genesis_block):
 
     assert len(txn.outputs) == 1
     txn_output = txn.outputs[0]
-    assert txn_output.is_coinbase
     assert txn_output.value == 50 * (10 ** 8)
     assert txn_output.script_pub_key.hex() == (
         '4104678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb'
@@ -135,8 +137,12 @@ def test_block_170(block_170):
     assert coinbase_txn.version == 1
     assert len(coinbase_txn.inputs) == 1
     assert coinbase_txn.lock_time == datetime(1970, 1, 1, 0, 0)
+    assert coinbase_txn.txn_hash == (
+        'b1fea52486ce0c62bb442b530a3f0132b826c74e473d1f2c220bfa78111c5082'
+    )
 
     coinbase_txn_input = coinbase_txn.inputs[0]
+    assert coinbase_txn_input.is_coinbase
     assert coinbase_txn_input.previous_hash == (
         '0000000000000000000000000000000000000000000000000000000000000000'
     )
@@ -154,16 +160,22 @@ def test_block_170(block_170):
         '4104d46c4968bde02899d2aa0963367c7a6ce34eec332b32e42e5f3407e052d64ac'
         '625da6f0718e7b302140434bd725706957c092db53805b821a85b23a7ac61725bac'
     )
+    assert coinbase_txn_output.address == '1PSSGeFHDnKNxiEyFrD1wcEaHr9hrQDDWc'
 
     real_txn = block.transactions[1]
     assert real_txn.version == 1
     assert len(real_txn.inputs) == 1
     assert real_txn.lock_time == datetime(1970, 1, 1, 0, 0)
+    assert real_txn.txn_hash == (
+        'f4184fc596403b9d638783cf57adfe4c75c605f6356fbc91338530e9831e9e16'
+    )
 
     real_txn_input = real_txn.inputs[0]
+    assert not real_txn_input.is_coinbase
     assert real_txn_input.previous_hash == (
         '0437cd7f8525ceed2324359c2d0ba26006d92d856a9c20fa0241106ee5a597c9'
     )
+    assert not real_txn_input.is_coinbase
     assert real_txn_input.txn_out_id == 0
     assert real_txn_input.signature_script.hex() == (
         '47304402204e45e16932b8af514961a1d3a1a25fdf3f4f7732e9d624c6c61548ab5fb'
@@ -174,10 +186,16 @@ def test_block_170(block_170):
     assert len(real_txn.outputs) == 2
     real_txn_output1 = real_txn.outputs[0]
     assert real_txn_output1.value == 10 * (10 ** 8)
-    # TODO
-    # assert real_txn_output1.script_pub_key.hex() == ''
+    assert real_txn_output1.script_pub_key.hex() == (
+        '4104ae1a62fe09c5f51b13905f07f06b99a2f7159b2225f374cd378d71302fa2841'
+        '4e7aab37397f554a7df5f142c21c1b7303b8a0626f1baded5c72a704f7e6cd84cac'
+     )
+    assert real_txn_output1.address == '1Q2TWHE3GMdB6BZKafqwxXtWAWgFt5Jvm3'
 
     real_txn_output2 = real_txn.outputs[1]
     assert real_txn_output2.value == 40 * (10 ** 8)
-    # TODO
-    # assert real_txn_output2.script_pub_key == b''
+    assert real_txn_output2.script_pub_key.hex() == (
+        '410411db93e1dcdb8a016b49840f8c53bc1eb68a382e97b1482ecad7b148a6909a5'
+        'cb2e0eaddfb84ccf9744464f82e160bfa9b8b64f9d4c03f999b8643f656b412a3ac'
+    )
+    assert real_txn_output2.address == '12cbQLTFMXRnSzktFkuoG3eHoMeFtpTu3S'
