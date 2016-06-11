@@ -169,6 +169,9 @@ class TransactionInput(object):
         self.signature_script = signature_script
         self.seq_no = seq_no
 
+    def is_coinbase(self):
+        return self.txn_out_id == 0xffffffff
+
     @property
     def previous_hash(self) -> str:
         return self.previous_hash_raw[::-1].hex()
@@ -225,6 +228,13 @@ class TransactionOutput(object):
         """
         self.value = value
         self.script_pub_key = script_pub_key
+
+    def is_coinbase(self):
+        return self.script_pub_key[0] == 0x41
+
+    @property
+    def address(self):
+        pass
 
     @classmethod
     def from_binary_data(

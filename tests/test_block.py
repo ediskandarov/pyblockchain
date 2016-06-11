@@ -71,18 +71,25 @@ def test_genesis_block(genesis_block):
 
     assert len(block.transactions) == 1
 
+    # NOQA https://blockchain.info/tx/4a5e1e4baab89f3a32518a88c31bc87f618f76673e2cc77ab2127b7afdeda33b
     txn = block.transactions[0]
     assert txn.version == 1
     assert len(txn.inputs) == 1
     assert txn.lock_time == datetime(1970, 1, 1, 0, 0)
 
     txn_input = txn.inputs[0]
+    assert txn_input.is_coinbase
     assert txn_input.previous_hash == (
         '0000000000000000000000000000000000000000000000000000000000000000'
     )
 
     assert txn_input.seq_no == 0xffffffff
     assert txn_input.txn_out_id == 0xffffffff
+    assert txn_input.signature_script.hex() == (
+        '04ffff001d0104455468652054696d65732030332f4a616e2f32303039204368616e6'
+        '3656c6c6f72206f6e206272696e6b206f66207365636f6e64206261696c6f75742066'
+        '6f722062616e6b73'
+    )
     assert txn_input.signature_script.endswith(
         b'The Times 03/Jan/2009 Chancellor on '
         b'brink of second bailout for banks'
@@ -90,6 +97,7 @@ def test_genesis_block(genesis_block):
 
     assert len(txn.outputs) == 1
     txn_output = txn.outputs[0]
+    assert txn_output.is_coinbase
     assert txn_output.value == 50 * (10 ** 8)
     assert txn_output.script_pub_key.hex() == (
         '4104678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb'
@@ -134,8 +142,8 @@ def test_block_170(block_170):
 
     assert coinbase_txn_input.seq_no == 0xffffffff
     assert coinbase_txn_input.txn_out_id == 0xffffffff
-    assert coinbase_txn_input.signature_script == (
-        b'\x04\xff\xff\x00\x1d\x01\x02'
+    assert coinbase_txn_input.signature_script.hex() == (
+        '04ffff001d0102'
     )
 
     assert len(coinbase_txn.outputs) == 1
@@ -166,9 +174,9 @@ def test_block_170(block_170):
     real_txn_output1 = real_txn.outputs[0]
     assert real_txn_output1.value == 10 * (10 ** 8)
     # TODO
-    assert real_txn_output1.script_pub_key.hex() == ''
+    # assert real_txn_output1.script_pub_key.hex() == ''
 
     real_txn_output2 = real_txn.outputs[1]
     assert real_txn_output2.value == 40 * (10 ** 8)
     # TODO
-    assert real_txn_output2.script_pub_key == b''
+    # assert real_txn_output2.script_pub_key == b''
