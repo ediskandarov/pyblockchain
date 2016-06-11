@@ -4,6 +4,8 @@ pyblockchain
 
 .. image:: https://img.shields.io/pypi/v/pyblockchain.svg
    :target: http://pypi.python.org/pypi/pyblockchain
+.. image:: https://travis-ci.org/toidi/pyblockchain.svg?branch=master
+   :target: https://travis-ci.org/toidi/pyblockchain
 
 pyblockchain is a Python library for parsing blockchain data
 
