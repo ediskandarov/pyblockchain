@@ -6,9 +6,11 @@ According to https://bitcoin.org/en/developer-reference#block-headers
 
 """
 from datetime import datetime
-from hashlib import sha256
+import hashlib
 import struct
 from typing import Sequence
+
+import base58
 
 
 def varint(data: memoryview, offset: int) -> (int, int):
@@ -229,12 +231,31 @@ class TransactionOutput(object):
         self.value = value
         self.script_pub_key = script_pub_key
 
+    @property
     def is_coinbase(self):
         return self.script_pub_key[0] == 0x41
 
     @property
     def address(self):
-        pass
+        if self.is_coinbase:
+            ripemd160_bin_pub_key = hashlib.new(
+                'ripemd160',
+                hashlib.sha256(
+                    # strip first byte 0x41 and last byte OP_CHECKSIG
+                    self.script_pub_key[1:-1]
+                ).digest()
+            ).digest()
+
+            # network id byte
+            hash_bin_pub_key = b'\x00' + ripemd160_bin_pub_key
+
+            checksum = hashlib.sha256(
+                hashlib.sha256(hash_bin_pub_key).digest()
+            ).digest()
+            bin_address = b''.join([hash_bin_pub_key, checksum[:4]])
+
+            address = base58.b58encode(bin_address)
+            return address
 
     @classmethod
     def from_binary_data(
@@ -355,8 +376,10 @@ class Block(object):
             self.header.bits,
             self.header.nonce,
         )
-        h = sha256(
-            sha256(header_bin).digest()
+        # The named constructors are much faster than new()
+        # and should be preferred.
+        h = hashlib.sha256(
+            hashlib.sha256(header_bin).digest()
         ).digest()
         return h[::-1].hex()
 

@@ -38,6 +38,7 @@ Useful links
 * `How to Program Block Chain Explorers with Python`_
 * `Genesis block`_
 * `Transaction`_
+* `Technical background of version 1 Bitcoin addresses`_
 * `Block hashing algorithm`_
 * `Blockchain.info Block #0`_
 * `Script opcodes`_
@@ -51,3 +52,4 @@ Useful links
 .. _Bitcoin Developer Guide: https://bitcoin.org/en/developer-guide
 .. _Bitcoin Developer Reference: https://bitcoin.org/en/developer-reference
 .. _script opcodes: https://github.com/bitcoin/bitcoin/blob/0.12/src/script/script.h
+.. _Technical background of version 1 Bitcoin addresses: https://en.bitcoin.it/wiki/Technical_background_of_version_1_Bitcoin_addresses
