@@ -18,11 +18,11 @@ class BlockchainFileReader(object):
                 mmap_length,
                 access=mmap.ACCESS_READ,
             )
-
+            file_size=blockchain_mmap.size()
             offset = 0
             # linit - 8 MB
             limit = 8 * 1024 * 1024
-            while True:
+            while offset < file_size:
                 # TODO: no need in memory view?
                 blockchain_mview = memoryview(
                     blockchain_mmap[offset:offset + limit]
