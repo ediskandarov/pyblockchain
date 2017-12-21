@@ -18,7 +18,7 @@ class BlockchainFileReader(object):
                 mmap_length,
                 access=mmap.ACCESS_READ,
             )
-            file_size=blockchain_mmap.size()
+            file_size = blockchain_mmap.size()
             offset = 0
             # linit - 8 MB
             limit = 8 * 1024 * 1024
