@@ -13,5 +13,6 @@ def main():
         print('total consumed', total_consumed)
         print('total transactions', len(block.transactions))
 
+
 if __name__ == '__main__':
     main()

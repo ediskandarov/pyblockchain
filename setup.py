@@ -3,7 +3,7 @@ from setuptools import find_packages, setup
 
 setup(
     name='pyblockchain',
-    version='0.2.1',
+    version='0.2.2',
     description='pyblockchain is a Python library for parsing blockchain data',
     url='https://github.com/toidi/pyblockchain',
     author='Eduard Iskandarov',
